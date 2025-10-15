@@ -17,7 +17,7 @@ class WebServer {
         // this.pathSetUp= new PathSetUp();
 
         this.app.use((req, res, next) => {
-            res.header('Access-Control-Allow-Origin', 'http://localhost:4200');
+            res.header('Access-Control-Allow-Origin',  'http://localhost:4200', 'http://52.15.143.100:4200');
             res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
             res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
             if (req.method === 'OPTIONS') {
