@@ -505,18 +505,19 @@ router.put('/agendar', async (req, res) => {
     }
 });
 
-// Nuevo endpoint: Consultar hojas de vida que SÍ tienen IPS asignada (sin autenticación)
+// Nuevo endpoint: Consultar hojas de vida que SÍ tienen IPS asignada y estado EN ESPERA (sin autenticación)
 router.get('/con-ips', async (req, res) => {
     try {
-        // Consultar hojas de vida que SÍ tienen IPS_ID asignada
+        // Consultar hojas de vida que SÍ tienen IPS_ID asignada y estado EN ESPERA
         const hojasVidaConIps = await HojaVida.find({
-            IPS_ID: { $exists: true, $ne: null }
+            IPS_ID: { $exists: true, $ne: null },
+            ESTADO: 'EN ESPERA'
         }).populate('IPS_ID').lean();
 
         return res.status(200).json({
             error: 0,
             response: {
-                mensaje: `Se encontraron ${hojasVidaConIps.length} hoja(s) de vida con IPS asignada`,
+                mensaje: `Se encontraron ${hojasVidaConIps.length} hoja(s) de vida con IPS asignada y estado EN ESPERA`,
                 total_registros: hojasVidaConIps.length,
                 hojas_vida: hojasVidaConIps
             }
