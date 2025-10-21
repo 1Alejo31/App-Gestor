@@ -30,7 +30,7 @@ const hojaVidaSchema = new mongoose.Schema(
         ESTRATO: { type: String },
         TIPO_MEDIO: { type: String },
         COLEGIO: { type: String },
-        IPS_ID: { type: mongoose.Schema.Types.ObjectId, ref: 'cl_ips' },
+        IPS_ID: { type: mongoose.Schema.Types.ObjectId, ref: 'IPS' },
         PDF_URL: { type: String },
         // Campos de agendamiento
         FECHA_HORA: { type: Date },
