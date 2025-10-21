@@ -528,4 +528,68 @@ router.get('/con-ips', async (req, res) => {
     }
 });
 
+// Endpoint para actualizar estado de hoja de vida (sin autenticación)
+router.put('/:hojaVidaId/estado', async (req, res) => {
+    try {
+        const { hojaVidaId } = req.params;
+        const { estado, detalle } = req.body;
+
+        // Validar que se envíen los campos requeridos
+        if (!estado) {
+            return res.status(400).json({
+                error: 1,
+                response: { mensaje: 'El campo estado es requerido' }
+            });
+        }
+
+        // Validar que el ID sea válido
+        if (!hojaVidaId || hojaVidaId.length !== 24) {
+            return res.status(400).json({
+                error: 1,
+                response: { mensaje: 'ID de hoja de vida inválido' }
+            });
+        }
+
+        // Buscar la hoja de vida
+        const hojaVida = await HojaVida.findById(hojaVidaId);
+        if (!hojaVida) {
+            return res.status(404).json({
+                error: 1,
+                response: { mensaje: 'Hoja de vida no encontrada' }
+            });
+        }
+
+        // Actualizar el estado y detalle
+        const updateData = { ESTADO: estado };
+        if (detalle !== undefined) {
+            updateData.DETALLE = detalle;
+        }
+
+        const hojaActualizada = await HojaVida.findByIdAndUpdate(
+            hojaVidaId,
+            updateData,
+            { new: true }
+        );
+
+        return res.status(200).json({
+            error: 0,
+            response: {
+                mensaje: 'Estado actualizado correctamente',
+                data: {
+                    id: hojaActualizada._id,
+                    estado: hojaActualizada.ESTADO,
+                    detalle: hojaActualizada.DETALLE || null
+                }
+            }
+        });
+
+    } catch (err) {
+        console.error('Error en PUT /:hojaVidaId/estado:', err);
+        return res.status(500).json({
+            error: 1,
+            response: { mensaje: 'Error interno del servidor' }
+        });
+    }
+});
+
 module.exports = router;
