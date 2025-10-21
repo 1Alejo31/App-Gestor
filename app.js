@@ -1,11 +1,10 @@
 require('dotenv').config(); // carga las variables del .env
 
-const express = require('express');
-const app = express();
+const WebServer = require('./services/webServices/class/webServerClass');
 
 // lee el puerto del .env o usa 3000 por defecto
 const port = process.env.PORT || 3000;
 
-app.listen(port, () => {
-    console.log(`Server listening on port ${port}`);
-});
+// Crear e iniciar el servidor web con toda la configuración
+const webServer = new WebServer(port);
+webServer.start();
