@@ -79,7 +79,7 @@ router.put('/pdf', (req, res, next) => {
             id,
             {
                 PDF_URL: pdfUrl,
-                ESTADO: "EN GESTION"
+                ESTADO: "EN ESPERA"
             },
             { new: true }
         );
