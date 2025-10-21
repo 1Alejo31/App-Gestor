@@ -482,7 +482,8 @@ router.put('/agendar', async (req, res) => {
                 FECHA_HORA: fechaHoraDate,
                 EXAMENES: examenes,
                 RECOMENDACIONES: recomendaciones,
-                USUARIO_ID: usuario_id
+                USUARIO_ID: usuario_id,
+                ESTADO: 'EN ESPERA'
             },
             { new: true }
         );
