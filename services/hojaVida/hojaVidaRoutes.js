@@ -505,5 +505,27 @@ router.put('/agendar', async (req, res) => {
     }
 });
 
+// Nuevo endpoint: Consultar hojas de vida que SÍ tienen IPS asignada (sin autenticación)
+router.get('/con-ips', async (req, res) => {
+    try {
+        // Consultar hojas de vida que SÍ tienen IPS_ID asignada
+        const hojasVidaConIps = await HojaVida.find({
+            IPS_ID: { $exists: true, $ne: null }
+        }).populate('IPS_ID').lean();
+
+        return res.status(200).json({
+            error: 0,
+            response: {
+                mensaje: `Se encontraron ${hojasVidaConIps.length} hoja(s) de vida con IPS asignada`,
+                total_registros: hojasVidaConIps.length,
+                hojas_vida: hojasVidaConIps
+            }
+        });
+
+    } catch (err) {
+        console.error('Error en /api/hojas-vida/con-ips:', err);
+        return res.status(500).json({ error: 1, response: { mensaje: 'Error interno del servidor' } });
+    }
+});
 
 module.exports = router;
