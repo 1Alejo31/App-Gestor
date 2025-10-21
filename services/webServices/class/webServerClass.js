@@ -20,7 +20,7 @@ class WebServer {
 
         // Configuración de CORS
         const corsOptions = {
-            origin: ['http://localhost:4200', 'http://52.15.143.100:4200'],
+            origin: ['http://localhost:4200', 'http://3.142.186.227:4200'],
             credentials: true,
             methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
             allowedHeaders: ['Content-Type', 'Authorization'],
