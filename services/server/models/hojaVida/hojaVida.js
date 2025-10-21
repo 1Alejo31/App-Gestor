@@ -29,7 +29,14 @@ const hojaVidaSchema = new mongoose.Schema(
         GRUP_MINO: { type: String },
         ESTRATO: { type: String },
         TIPO_MEDIO: { type: String },
-        COLEGIO: { type: String }
+        COLEGIO: { type: String },
+        IPS_ID: { type: mongoose.Schema.Types.ObjectId, ref: 'cl_ips' },
+        PDF_URL: { type: String },
+        // Campos de agendamiento
+        FECHA_HORA: { type: Date },
+        EXAMENES: { type: String },
+        RECOMENDACIONES: { type: String },
+        USUARIO_ID: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
     },
     { timestamps: true, collection: 'cl_hoja_vida' }
 );

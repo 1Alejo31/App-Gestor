@@ -7,6 +7,7 @@ const userSchema = new mongoose.Schema(
         Cr_Perfil: { type: String },
         Cr_Empresa: { type: String },
         Cr_Estado: { type: String },
+        Cr_Ips: { type: mongoose.Schema.Types.ObjectId, ref: 'IPS' },
         
         Cr_Pe_Codigo: { type: mongoose.Schema.Types.ObjectId, ref: 'Permiso' }
     },

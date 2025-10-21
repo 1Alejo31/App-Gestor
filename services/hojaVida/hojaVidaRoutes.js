@@ -1,12 +1,14 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const HojaVida = require('../server/models/hojaVida/hojaVida');
+const IPS = require('../server/models/ips/ips');
+
 
 const router = express.Router();
 
 router.post('/crear', async (req, res) => {
     try {
-        
+
         const authHeader = req.headers['authorization'] || req.headers.authorization;
         if (!authHeader || !authHeader.startsWith('Bearer ')) {
             return res.status(401).json({ error: 1, response: { mensaje: 'Token requerido' } });
@@ -61,7 +63,7 @@ router.post('/crear', async (req, res) => {
 
         const documentosUnicos = new Set();
         const duplicadosInternos = [];
-        
+
         for (const hoja of hojasVida) {
             if (hoja.DOCUMENTO !== null && hoja.DOCUMENTO !== undefined && String(hoja.DOCUMENTO).trim() !== '') {
                 const doc = String(hoja.DOCUMENTO).trim();
@@ -112,7 +114,7 @@ router.post('/crear', async (req, res) => {
 
 router.get('/consultar', async (req, res) => {
     try {
-        
+
         const authHeader = req.headers['authorization'] || req.headers.authorization;
         if (!authHeader || !authHeader.startsWith('Bearer ')) {
             return res.status(401).json({ error: 1, response: { mensaje: 'Token requerido' } });
@@ -128,7 +130,14 @@ router.get('/consultar', async (req, res) => {
             return res.status(401).json({ error: 1, response: { mensaje: 'Token inválido o expirado' } });
         }
 
-        const hojasVida = await HojaVida.find({}).lean();
+        // Filtrar solo registros que NO tengan IPS_ID (null, undefined o no existe el campo)
+        const hojasVida = await HojaVida.find({
+            $or: [
+                { IPS_ID: { $exists: false } },
+                { IPS_ID: null },
+                { IPS_ID: undefined }
+            ]
+        }).lean();
 
         return res.status(200).json({
             error: 0,
@@ -143,5 +152,358 @@ router.get('/consultar', async (req, res) => {
         return res.status(500).json({ error: 1, response: { mensaje: 'Error interno del servidor' } });
     }
 });
+
+router.get('/', async (req, res) => {
+    try {
+
+        const authHeader = req.headers['authorization'] || req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(401).json({
+                error: 1,
+                response: { mensaje: 'Token requerido' }
+            });
+        }
+
+        const token = authHeader.substring(7);
+        const secret = process.env.JWT_SECRET;
+
+        if (!secret) {
+            return res.status(500).json({
+                error: 1,
+                response: { mensaje: 'Servidor sin JWT_SECRET configurado' }
+            });
+        }
+
+        try {
+            jwt.verify(token, secret);
+        } catch (e) {
+            return res.status(401).json({
+                error: 1,
+                response: { mensaje: 'Token inválido o expirado' }
+            });
+        }
+
+
+        // Filtrar hojas de vida que NO tienen IPS_ID asignada
+        const hojasVida = await HojaVida.find({
+            $or: [
+                { IPS_ID: { $exists: false } },
+                { IPS_ID: null },
+                { IPS_ID: undefined }
+            ]
+        }).lean();
+
+
+        return res.status(200).json({
+            error: 0,
+            response: {
+                mensaje: 'Consulta exitosa - Hojas de vida sin IPS asignada',
+                data: hojasVida,
+                total: hojasVida.length
+            }
+        });
+
+    } catch (err) {
+        console.error('Error en /api/hoja_vida:', err);
+        return res.status(500).json({
+            error: 1,
+            response: { mensaje: 'Error inesperado' }
+        });
+    }
+});
+
+// Nuevo servicio para traer TODAS las hojas de vida sin restricciones
+router.get('/hojas-vida-full', async (req, res) => {
+    try {
+        // Validación de token
+        const authHeader = req.headers['authorization'] || req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(401).json({
+                error: 1,
+                response: { mensaje: 'Token requerido' }
+            });
+        }
+
+        const token = authHeader.substring(7);
+        const secret = process.env.JWT_SECRET;
+
+        if (!secret) {
+            return res.status(500).json({
+                error: 1,
+                response: { mensaje: 'Servidor sin JWT_SECRET configurado' }
+            });
+        }
+
+        try {
+            jwt.verify(token, secret);
+        } catch (e) {
+            return res.status(401).json({
+                error: 1,
+                response: { mensaje: 'Token inválido o expirado' }
+            });
+        }
+
+        // Traer TODAS las hojas de vida sin ningún filtro
+        const hojasVida = await HojaVida.find({}).lean();
+
+        return res.status(200).json({
+            error: 0,
+            response: {
+                mensaje: 'Consulta exitosa - Todas las hojas de vida',
+                data: hojasVida,
+                total: hojasVida.length
+            }
+        });
+
+    } catch (err) {
+        console.error('Error en /api/hojas-vida/hojas-vida-full:', err);
+        return res.status(500).json({
+            error: 1,
+            response: { mensaje: 'Error inesperado' }
+        });
+    }
+});
+
+// Nuevo servicio para traer TODAS las hojas de vida sin restricciones
+router.get('/hojas-vida-full', async (req, res) => {
+    try {
+        // Validación de token
+        const authHeader = req.headers['authorization'] || req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(401).json({
+                error: 1,
+                response: { mensaje: 'Token requerido' }
+            });
+        }
+
+        const token = authHeader.substring(7);
+        const secret = process.env.JWT_SECRET;
+
+        if (!secret) {
+            return res.status(500).json({
+                error: 1,
+                response: { mensaje: 'Servidor sin JWT_SECRET configurado' }
+            });
+        }
+
+        try {
+            jwt.verify(token, secret);
+        } catch (e) {
+            return res.status(401).json({
+                error: 1,
+                response: { mensaje: 'Token inválido o expirado' }
+            });
+        }
+
+        // Traer TODAS las hojas de vida sin ningún filtro
+        const hojasVida = await HojaVida.find({}).lean();
+
+        return res.status(200).json({
+            error: 0,
+            response: {
+                mensaje: 'Consulta exitosa - Todas las hojas de vida',
+                data: hojasVida,
+                total: hojasVida.length
+            }
+        });
+
+    } catch (err) {
+        console.error('Error en /api/hojas-vida/hojas-vida-full:', err);
+        return res.status(500).json({
+            error: 1,
+            response: { mensaje: 'Error inesperado' }
+        });
+    }
+});
+
+router.post('/por_ips', async (req, res) => {
+    try {
+
+        const { ips_id } = req.body;
+
+        // Obtener token del header Authorization
+        const authHeader = req.headers['authorization'] || req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(401).json({ error: 1, response: { mensaje: 'Token Bearer requerido' } });
+        }
+
+        const token = authHeader.substring(7); // Remover 'Bearer '
+
+        const secret = process.env.JWT_SECRET;
+        if (!secret) {
+            return res.status(500).json({ error: 1, response: { mensaje: 'Servidor sin JWT_SECRET configurado' } });
+        }
+
+        try {
+            jwt.verify(token, secret);
+        } catch (e) {
+            return res.status(401).json({ error: 1, response: { mensaje: 'Token inválido o expirado' } });
+        }
+
+        if (!ips_id || ips_id.trim() === '') {
+            return res.status(400).json({ error: 1, response: { mensaje: 'Se debe enviar el ID de la IPS' } });
+        }
+
+        // Buscar IPS por ID
+        const ips = await IPS.findById(ips_id).lean();
+        if (!ips) {
+            return res.status(404).json({
+                error: 1,
+                response: { mensaje: `No se encontró la IPS con ID '${ips_id}' o no tiene registros asociados` }
+            });
+        }
+
+        const hojasVida = await HojaVida.find({ IPS_ID: ips._id }).lean();
+
+        if (hojasVida.length === 0) {
+            return res.status(404).json({
+                error: 1,
+                response: { mensaje: `No existen hojas de vida asociadas a la IPS '${ips.NOMBRE_IPS}'` }
+            });
+        }
+
+
+        const data = hojasVida.map(hv => ({
+            ...hv, // Incluir todos los campos del documento original
+            NOMBREIPS: ips.NOMBRE_IPS // Agregar el nombre de la IPS
+        }));
+
+        return res.status(200).json({
+            error: 0,
+            response: {
+                mensaje: `Hojas de vida de la IPS: ${ips.NOMBRE_IPS}`,
+                total: hojasVida.length,
+                data
+            }
+        });
+
+    } catch (err) {
+        console.error('Error en /api/hoja_vida/por_ips:', err);
+        return res.status(500).json({ error: 1, response: { mensaje: 'Error interno del servidor' } });
+    }
+});
+router.post('/por_documento', async (req, res) => {
+    try {
+
+        const authHeader = req.headers['authorization'] || req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(401).json({ error: 1, response: { mensaje: 'Token requerido' } });
+        }
+        const token = authHeader.substring(7);
+        const secret = process.env.JWT_SECRET;
+        if (!secret) {
+            return res.status(500).json({ error: 1, response: { mensaje: 'Servidor sin JWT_SECRET configurado' } });
+        }
+        try {
+            jwt.verify(token, secret);
+        } catch (e) {
+            return res.status(401).json({ error: 1, response: { mensaje: 'Token inválido o expirado' } });
+        }
+
+        const { documento } = req.body;
+
+        if (!documento || String(documento).trim() === '') {
+            return res.status(400).json({ error: 1, response: { mensaje: 'Se requiere el número de documento' } });
+        }
+
+
+        const hojaVida = await HojaVida.findOne({ DOCUMENTO: documento.trim() }).populate('IPS_ID').lean();
+
+        if (!hojaVida) {
+            return res.status(404).json({ error: 1, response: { mensaje: `Documento '${documento}' no encontrado` } });
+        }
+
+
+        const respuesta = {
+            _id: hojaVida._id,
+            DOCUMENTO: hojaVida.DOCUMENTO,
+            NOMBRE: hojaVida.NOMBRE,
+            PRIMER_APELLIDO: hojaVida.PRIMER_APELLIDO,
+            NOMBREIPS: hojaVida.IPS_ID ? hojaVida.IPS_ID.NOMBRE_IPS : null,
+            EXAMENES: hojaVida.EXAMENES || [],
+            FECHA_EXAMEN: hojaVida.FECHA_EXAMEN || null,
+            HORA_EXAMEN: hojaVida.HORA_EXAMEN || null
+        };
+
+        return res.status(200).json({
+            error: 0,
+            response: {
+                mensaje: 'Consulta exitosa',
+                data: respuesta
+            }
+        });
+
+    } catch (err) {
+        console.error('Error en /api/hoja_vida/por_documento:', err);
+        return res.status(500).json({ error: 1, response: { mensaje: 'Error interno del servidor' } });
+    }
+});
+
+router.put('/agendar', async (req, res) => {
+    try {
+
+        const authHeader = req.headers['authorization'] || req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(401).json({ error: 1, response: { mensaje: 'Token requerido' } });
+        }
+        const token = authHeader.substring(7);
+        const secret = process.env.JWT_SECRET;
+        if (!secret) {
+            return res.status(500).json({ error: 1, response: { mensaje: 'Servidor sin JWT_SECRET configurado' } });
+        }
+        try {
+            jwt.verify(token, secret);
+        } catch (e) {
+            return res.status(401).json({ error: 1, response: { mensaje: 'Token inválido o expirado' } });
+        }
+
+        const { hojaVidaId, fecha_hora, examenes, recomendaciones, usuario_id, ips_id } = req.body;
+
+        if (!hojaVidaId || !fecha_hora || !examenes || !recomendaciones || !usuario_id || !ips_id) {
+            return res.status(400).json({ error: 1, response: { mensaje: 'Todos los campos son requeridos: hojaVidaId, fecha_hora, examenes, recomendaciones, usuario_id, ips_id' } });
+        }
+
+        // Verificar que la IPS existe
+        const ips = await IPS.findById(ips_id);
+        if (!ips) {
+            return res.status(404).json({ error: 1, response: { mensaje: `No se encontró la IPS con id '${ips_id}'` } });
+        }
+
+        // Convertir fecha_hora a Date object
+        const fechaHoraDate = new Date(fecha_hora);
+        if (isNaN(fechaHoraDate.getTime())) {
+            return res.status(400).json({ error: 1, response: { mensaje: 'Formato de fecha_hora inválido. Use formato ISO: YYYY-MM-DDTHH:mm' } });
+        }
+
+        const hojaActualizada = await HojaVida.findByIdAndUpdate(
+            hojaVidaId,
+            {
+                IPS_ID: ips_id,
+                FECHA_HORA: fechaHoraDate,
+                EXAMENES: examenes,
+                RECOMENDACIONES: recomendaciones,
+                USUARIO_ID: usuario_id
+            },
+            { new: true }
+        );
+
+        if (!hojaActualizada) {
+            return res.status(404).json({ error: 1, response: { mensaje: `No se encontró la hoja de vida con id '${hojaVidaId}'` } });
+        }
+
+        return res.status(200).json({
+            error: 0,
+            response: {
+                mensaje: 'Agendamiento actualizado correctamente',
+                id: hojaActualizada._id
+            }
+        });
+
+    } catch (err) {
+        console.error('Error en /api/hoja_vida/agendar:', err);
+        return res.status(500).json({ error: 1, response: { mensaje: 'Error inesperado al actualizar el documento' } });
+    }
+});
+
 
 module.exports = router;
