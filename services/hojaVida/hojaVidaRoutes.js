@@ -594,4 +594,33 @@ router.put('/:hojaVidaId/estado', async (req, res) => {
     }
 });
 
+// Servicio para bot: Consultar registros con campo DETALLE procesado (sin autenticación)
+router.get('/bot/procesados', async (req, res) => {
+    try {
+        // Consultar hojas de vida que tengan el campo DETALLE con información de procesamiento
+        const registrosProcesados = await HojaVida.find({
+            DETALLE: {
+                $exists: true,
+                $ne: null,
+                $regex: /PROCESADO_.*WhatsApp.*Email.*/i
+            }
+        }).lean();
+
+        return res.status(200).json({
+            error: 0,
+            response: {
+                mensaje: `Se encontraron ${registrosProcesados.length} registro(s) procesado(s)`,
+                data: registrosProcesados.length
+            }
+        });
+
+    } catch (err) {
+        console.error('Error en /api/hojas-vida/bot/procesados:', err);
+        return res.status(500).json({
+            error: 1,
+            response: { mensaje: 'Error interno del servidor' }
+        });
+    }
+});
+
 module.exports = router;
