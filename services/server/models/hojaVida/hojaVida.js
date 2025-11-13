@@ -37,7 +37,9 @@ const hojaVidaSchema = new mongoose.Schema(
         EXAMENES: { type: String },
         RECOMENDACIONES: { type: String },
         USUARIO_ID: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-        DETALLE: { type: String }
+        DETALLE: { type: String },
+        TEXT_NOTIFICACION: { type: String },
+        ESTADO_NOTIFICACION: { type: String, default: "SIN GESTION" }
     },
     { timestamps: true, collection: 'cl_hoja_vida' }
 );
