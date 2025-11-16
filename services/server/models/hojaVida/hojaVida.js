@@ -39,7 +39,8 @@ const hojaVidaSchema = new mongoose.Schema(
         USUARIO_ID: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
         DETALLE: { type: String },
         TEXT_NOTIFICACION: { type: String },
-        ESTADO_NOTIFICACION: { type: String, default: "SIN GESTION" }
+        ESTADO_NOTIFICACION: { type: String, default: "TOMADO POR PSICOLOGIA" },
+        USUARIO_SIC: { type: String },
     },
     { timestamps: true, collection: 'cl_hoja_vida' }
 );
