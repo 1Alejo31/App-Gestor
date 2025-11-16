@@ -54,9 +54,10 @@ class WebServer {
 
         this.app.use('/api/auth', authRoutes);
         this.app.use('/api/users', userRoutes);
-        this.app.use('/api/hojas-vida', hojaVidaRoutes);
+        this.app.use('/api/hojas-vida', hojaVidaRoutes); 
         this.app.use('/api/ips', ipsRoutes);
         this.app.use('/api/pdf', pdf);
+        this.app.use('/api/estado_caso', pdf);
     }
 
     /* _userAuthentication() {
