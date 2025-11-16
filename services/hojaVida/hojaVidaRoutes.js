@@ -725,9 +725,11 @@ router.post('/casos_disponibles', async (req, res) => {
 
 router.put('/asignar_psicologo', async (req, res) => {
     try {
-        const { id, token, USUARIO_SIC } = req.body;
+        const authHeader = req.headers.authorization;
+        const tokenFromHeader = authHeader && authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+        const { id, token: tokenFromBody, USUARIO_SIC } = req.body;
+        const token = tokenFromBody || tokenFromHeader;
 
-        
         if (!id || !token || !USUARIO_SIC) {
             return res.status(400).json({
                 error: 1,
@@ -735,7 +737,6 @@ router.put('/asignar_psicologo', async (req, res) => {
             });
         }
 
-        
         const secret = process.env.JWT_SECRET;
         if (!secret) {
             return res.status(500).json({
@@ -753,10 +754,9 @@ router.put('/asignar_psicologo', async (req, res) => {
             });
         }
 
-        
         const update = await HojaVida.findByIdAndUpdate(
             id,
-            { USUARIO_SIC },  
+            { USUARIO_SIC },
             { new: true }
         );
 
@@ -774,7 +774,6 @@ router.put('/asignar_psicologo', async (req, res) => {
                 id: update._id
             }
         });
-
     } catch (err) {
         console.error('Error en /api/hoja_vida/asignar_psicologo:', err);
         return res.status(500).json({
