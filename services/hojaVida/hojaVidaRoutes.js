@@ -644,6 +644,121 @@ router.post('/notificaciones_pendientes', async (req, res) => {
     }
 });
 
+// Dentro del archivo hojaVidaRoutes.js, añadimos la variante GET y mantenemos la POST existente.
+
+router.get('/por_usuario_sic', async (req, res) => {
+    try {
+        const authHeader = req.headers['authorization'] || req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(401).json({
+                error: 1,
+                response: { mensaje: 'Token requerido' }
+            });
+        }
+
+        const token = authHeader.substring(7);
+        const secret = process.env.JWT_SECRET;
+
+        if (!secret) {
+            return res.status(500).json({
+                error: 1,
+                response: { mensaje: 'Servidor sin JWT_SECRET configurado' }
+            });
+        }
+
+        try {
+            jwt.verify(token, secret);
+        } catch (e) {
+            return res.status(401).json({
+                error: 1,
+                response: { mensaje: 'Token inválido o expirado' }
+            });
+        }
+
+        const { USUARIO_SIC } = req.query;
+        if (!USUARIO_SIC) {
+            return res.status(400).json({
+                error: 1,
+                response: { mensaje: 'Falta el campo USUARIO_SIC' }
+            });
+        }
+
+        const hojasVida = await HojaVida.find({ USUARIO_SIC }).lean();
+
+        return res.status(200).json({
+            error: 0,
+            response: {
+                mensaje: 'Consulta exitosa - Hojas de vida por USUARIO_SIC',
+                data: hojasVida,
+                total: hojasVida.length
+            }
+        });
+    } catch (err) {
+        console.error('Error en /api/hojas-vida/por_usuario_sic (GET):', err);
+        return res.status(500).json({
+            error: 1,
+            response: { mensaje: 'Error inesperado' }
+        });
+    }
+});
+
+router.post('/por_usuario_sic', async (req, res) => {
+    try {
+        const authHeader = req.headers['authorization'] || req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(401).json({
+                error: 1,
+                response: { mensaje: 'Token requerido' }
+            });
+        }
+
+        const token = authHeader.substring(7);
+        const secret = process.env.JWT_SECRET;
+
+        if (!secret) {
+            return res.status(500).json({
+                error: 1,
+                response: { mensaje: 'Servidor sin JWT_SECRET configurado' }
+            });
+        }
+
+        try {
+            jwt.verify(token, secret);
+        } catch (e) {
+            return res.status(401).json({
+                error: 1,
+                response: { mensaje: 'Token inválido o expirado' }
+            });
+        }
+
+        const { USUARIO_SIC } = req.body;
+        if (!USUARIO_SIC) {
+            return res.status(400).json({
+                error: 1,
+                response: { mensaje: 'Falta el campo USUARIO_SIC' }
+            });
+        }
+
+        const hojasVida = await HojaVida.find({ USUARIO_SIC }).lean();
+
+        return res.status(200).json({
+            error: 0,
+            response: {
+                mensaje: 'Consulta exitosa - Hojas de vida por USUARIO_SIC',
+                data: hojasVida,
+                total: hojasVida.length
+            }
+        });
+
+    } catch (err) {
+        console.error('Error en /api/hojas-vida/por_usuario_sic (POST):', err);
+        return res.status(500).json({
+            error: 1,
+            response: { mensaje: 'Error inesperado' }
+        });
+    }
+});
+
 router.post('/casos_disponibles', async (req, res) => {
     try {
         const { token } = req.body;
