@@ -184,21 +184,13 @@ router.get('/', async (req, res) => {
             });
         }
 
-
         
-        const hojasVida = await HojaVida.find({
-            $or: [
-                { IPS_ID: { $exists: false } },
-                { IPS_ID: null },
-                { IPS_ID: undefined }
-            ]
-        }).lean();
-
+        const hojasVida = await HojaVida.find({}).lean();
 
         return res.status(200).json({
             error: 0,
             response: {
-                mensaje: 'Consulta exitosa - Hojas de vida sin IPS asignada',
+                mensaje: 'Consulta exitosa - Todas las hojas de vida',
                 data: hojasVida,
                 total: hojasVida.length
             }
