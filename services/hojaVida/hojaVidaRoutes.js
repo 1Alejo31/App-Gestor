@@ -748,8 +748,11 @@ router.put('/asignar_psicologo', async (req, res) => {
 
         const update = await HojaVida.findByIdAndUpdate(
             id,
-            { USUARIO_SIC },
-            { new: true }
+            {
+                USUARIO_SIC,
+                ESTADO_NOTIFICACION: "TOMADO POR PSICOLOGIA"
+            },
+            { new: true, runValidators: true }
         );
 
         if (!update) {

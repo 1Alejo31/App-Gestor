@@ -40,7 +40,7 @@ const hojaVidaSchema = new mongoose.Schema(
         DETALLE: { type: String },
         TEXT_NOTIFICACION: { type: String },
         ESTADO_NOTIFICACION: { type: String, default: "TOMADO POR PSICOLOGIA" },
-        USUARIO_SIC: { type: String }, // nuevo campo para asignación de psicólogo
+        USUARIO_SIC: { type: String },
     },
     { timestamps: true, collection: 'cl_hoja_vida' }
 );
