@@ -3,6 +3,22 @@ const jwt = require('jsonwebtoken');
 const HojaVida = require('../server/models/hojaVida/hojaVida');
 const IPS = require('../server/models/ips/ips');
 const Permiso = require('../server/models/permiso/permiso');
+const multer = require('multer');
+const fs = require('fs');
+const path = require('path');
+
+const storage = multer.memoryStorage();
+const upload =  multer({
+    storage,
+    fileFilter: (req, file, cb) => {
+        if (file.mimetype !== 'application/pdf') {
+            return cb(new Error('Solo se permiten archivos PDF'));
+        }
+        cb(null, true);
+    },
+    limits: { fileSize: 40 * 1024 * 1024 } 
+});
+
 
 
 const router = express.Router();
@@ -962,6 +978,378 @@ router.post('/caso_disponible', async (req, res) => {
     }
 });
 
+router.get('/sin_usuario_sic', async (req, res) => {
+    try {
+        
+        const authHeader = req.headers['authorization'] || req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(401).json({
+                error: 1,
+                response: { mensaje: 'Token requerido' }
+            });
+        }
+
+        const token = authHeader.substring(7);
+        const secret = process.env.JWT_SECRET;
+
+        if (!secret) {
+            return res.status(500).json({
+                error: 1,
+                response: { mensaje: 'Servidor sin JWT_SECRET configurado' }
+            });
+        }
+
+        try {
+            jwt.verify(token, secret);
+        } catch (e) {
+            return res.status(401).json({
+                error: 1,
+                response: { mensaje: 'Token inválido o expirado' }
+            });
+        }
+
+       
+        const registros = await HojaVida.find({
+            $or: [
+                { USUARIO_SIC: null },
+                { USUARIO_SIC: "" },
+                { USUARIO_SIC: { $exists: false } }
+            ]
+        })
+        .select(
+            "_id PKEYHOJAVIDA DOCUMENTO NOMBRE PRIMER_APELLIDO SEGUNDO_APELLIDO ESTADO_NOTIFICACION"
+        )
+        .lean();
+
+        if (!registros || registros.length === 0) {
+            return res.status(200).json({
+                error: 1,
+                response: {
+                    mensaje: 'No existen registros sin USUARIO_SIC'
+                }
+            });
+        }
+
+       
+        return res.status(200).json({
+            error: 0,
+            response: {
+                mensaje: 'Consulta exitosa',
+                data: registros
+            }
+        });
+
+    } catch (err) {
+        console.error('Error en /api/hoja_vida/sin_usuario_sic:', err);
+        return res.status(500).json({
+            error: 1,
+            response: { mensaje: 'Error inesperado' }
+        });
+    }
+});
+
+router.put('/estado_notificacion/gestionar', async (req, res) => {
+    try {
+        const authHeader = req.headers.authorization;
+
+        // Validar cabecera con token
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(401).json({
+                error: 1,
+                response: {
+                    mensaje: "Token inválido o no proporcionado"
+                }
+            });
+        }
+
+        const token = authHeader.split(' ')[1];
+        const { id } = req.body;
+
+        // Validar que el ID venga en el body
+        if (!id) {
+            return res.status(400).json({
+                error: 1,
+                response: {
+                    mensaje: "Debe enviar el ID del caso"
+                }
+            });
+        }
+
+        // Validar token JWT
+        let decoded;
+        try {
+            decoded = jwt.verify(token, process.env.JWT_SECRET);
+        } catch (err) {
+            return res.status(401).json({
+                error: 1,
+                response: {
+                    mensaje: "Token inválido o expirado"
+                }
+            });
+        }
+
+        // Actualizar estado
+        const update = {
+            ESTADO_NOTIFICACION: "GESTIONANDO NOTIFICACION",
+            H_ESTADO_NOTIFICACION_CONSENTIMIENTO: "SIN GESTION"
+        };
+
+        const hojaVida = await HojaVida.findByIdAndUpdate(id, update, {
+            new: true
+        });
+
+        if (!hojaVida) {
+            return res.status(404).json({
+                error: 1,
+                response: {
+                    mensaje: "No se encontró el caso con ese ID"
+                }
+            });
+        }
+
+        return res.json({
+            error: 0,
+            response: {
+                mensaje: "Estado actualizado correctamente",
+                id: hojaVida._id
+            }
+        });
+
+    } catch (err) {
+        console.error("Error inesperado:", err);
+        return res.status(500).json({
+            error: 1,
+            response: {
+                mensaje: "Error inesperado"
+            }
+        });
+    }
+});
+
+
+router.put('/notificacion/gestionar', async (req, res) => {
+    try {
+        // 1. Leer el token únicamente del header
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith("Bearer ")) {
+            return res.json({
+                error: 1,
+                response: { mensaje: "Token no proporcionado" }
+            });
+        }
+
+        const token = authHeader.split(" ")[1];
+
+        // 2. Validar el token
+        let decoded;
+        try {
+            decoded = jwt.verify(token, process.env.JWT_SECRET);
+        } catch (err) {
+            return res.json({
+                error: 1,
+                response: { mensaje: "Token inválido o expirado" }
+            });
+        }
+
+        // 3. Leer el ID desde el body
+        const { id } = req.body;
+
+        if (!id) {
+            return res.json({
+                error: 1,
+                response: { mensaje: "El ID del caso es obligatorio" }
+            });
+        }
+
+        // 4. Actualizar el documento
+        const actualizado = await HojaVida.findByIdAndUpdate(
+            id,
+            {
+                H_ESTADO_NOTIFICACION_CONSENTIMIENTO: "GESTIONADO",
+                ESTADO_NOTIFICACION: "GESTIONADO",
+                ESTADO: "Notificado Consentimiento"
+            },
+            { new: true }
+        );
+
+        if (!actualizado) {
+            return res.json({
+                error: 1,
+                response: { mensaje: "Error al actualizar el documento: no encontrado" }
+            });
+        }
+
+        // 5. Respuesta exitosa
+        return res.json({
+            error: 0,
+            response: {
+                mensaje: "Estados actualizados correctamente",
+                id
+            }
+        });
+
+    } catch (error) {
+        return res.json({
+            error: 1,
+            response: { mensaje: "Error inesperado", detalle: error.message }
+        });
+    }
+});
+
+
+router.post('/consulta_por_documento_completa', async (req, res) => {
+    try {
+        const { documento } = req.body;
+
+        
+        if (!documento) {
+            return res.json({
+                error: 1,
+                response: {
+                    mensaje: "El documento es obligatorio"
+                }
+            });
+        }
+
+       
+        const hojaVida = await HojaVida.findOne({ DOCUMENTO: documento });
+
+        if (!hojaVida) {
+            return res.json({
+                error: 1,
+                response: {
+                    mensaje: "Documento no encontrado"
+                }
+            });
+        }
+
+       
+        return res.json({
+            error: 0,
+            response: {
+                mensaje: "Consulta exitosa",
+                data: hojaVida
+            }
+        });
+
+    } catch (error) {
+        console.error("Error inesperado:", error);
+
+        return res.json({
+            error: 1,
+            response: {
+                mensaje: "Error inesperado",
+                detalle: error.message
+            }
+        });
+    }
+});
+
+router.put('/notificacion/recibida', upload.single('pdf'), async (req, res) => {
+    try {
+        const { _id } = req.body;
+
+        if (!_id || !req.file) {
+            return res.status(400).json({
+                error: 1,
+                response: { mensaje: "Faltan parámetros obligatorios (_id, pdf)" }
+            });
+        }
+
+        
+        const registroExistente = await HojaVida.findById(_id);
+        if (!registroExistente) {
+            return res.status(404).json({
+                error: 1,
+                response: { mensaje: "No se encontró el ID en la base de datos" }
+            });
+        }
+
+        
+        const nombreArchivo = `${_id}_${Date.now()}.pdf`;
+        const ruta_relativa = `notificaciones/${nombreArchivo}`;
+        const absolutePath = path.join(__dirname, '../../storage', ruta_relativa);
+
+        
+        const dir = path.dirname(absolutePath);
+        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+
+        
+        if (registroExistente.RUTA_NOTIFICACION_RECIBIDA) {
+            const oldPath = path.join(__dirname, '../../storage', registroExistente.RUTA_NOTIFICACION_RECIBIDA);
+            if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+        }
+
+        
+        fs.writeFileSync(absolutePath, req.file.buffer);
+
+        
+        registroExistente.RUTA_NOTIFICACION_RECIBIDA = ruta_relativa;
+        registroExistente.ESTADO = "CONSENTIMIENTO RECIBIDO";
+        await registroExistente.save();
+
+        return res.json({
+            error: 0,
+            response: {
+                mensaje: "PDF cargado y estado actualizado correctamente",
+                id: registroExistente._id
+            }
+        });
+
+    } catch (error) {
+        console.error("Error inesperado:", error);
+        return res.status(500).json({
+            error: 1,
+            response: { mensaje: "Error inesperado", detalle: error.message }
+        });
+    }
+});
+
+router.get('/notificacion/descargar', async (req, res) => {
+    try {
+        const authHeader = req.headers['authorization'] || req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(401).json({ error: 1, response: { mensaje: 'Token requerido' } });
+        }
+
+        const token = authHeader.substring(7);
+        const secret = process.env.JWT_SECRET;
+        if (!secret) return res.status(500).json({ error: 1, response: { mensaje: 'Servidor sin JWT_SECRET configurado' } });
+
+        let payload;
+        try {
+            payload = jwt.verify(token, secret);
+        } catch (e) {
+            return res.status(401).json({ error: 1, response: { mensaje: 'Token inválido o expirado' } });
+        }
+
+        const { id } = req.query; 
+        if (!id) return res.status(400).json({ error: 1, response: { mensaje: 'ID es obligatorio' } });
+
+        const registro = await HojaVida.findById(id);
+        if (!registro || !registro.RUTA_NOTIFICACION_RECIBIDA) {
+            return res.status(404).json({ error: 1, response: { mensaje: 'Documento no encontrado' } });
+        }
+
+        
+
+        const absolutePath = path.join(__dirname, '../../storage', registro.RUTA_NOTIFICACION_RECIBIDA);
+         console.log(absolutePath);
+        if (!fs.existsSync(absolutePath)) {
+           
+            return res.status(404).json({ error: 1, response: { mensaje: 'Archivo no encontrado en el servidor' } });
+        }
+
+        
+        res.download(absolutePath, registro.RUTA_NOTIFICACION_RECIBIDA, (err) => {
+            if (err) console.error('Error al enviar el archivo:', err);
+        });
+
+    } catch (err) {
+        console.error('Error inesperado:', err);
+        res.status(500).json({ error: 1, response: { mensaje: 'Error inesperado' } });
+    }
+});
 
 
 
