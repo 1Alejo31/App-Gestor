@@ -957,11 +957,7 @@ router.get('/sin_usuario_sic', async (req, res) => {
                 { USUARIO_SIC: "" },
                 { USUARIO_SIC: { $exists: false } }
             ]
-        })
-        .select(
-            "_id PKEYHOJAVIDA DOCUMENTO NOMBRE PRIMER_APELLIDO SEGUNDO_APELLIDO ESTADO_NOTIFICACION"
-        )
-        .lean();
+        }).lean();
 
         if (!registros || registros.length === 0) {
             return res.status(200).json({
@@ -977,7 +973,8 @@ router.get('/sin_usuario_sic', async (req, res) => {
             error: 0,
             response: {
                 mensaje: 'Consulta exitosa',
-                data: registros
+                data: registros,
+                total: registros.length
             }
         });
 
