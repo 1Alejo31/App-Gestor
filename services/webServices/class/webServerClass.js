@@ -9,6 +9,8 @@ const userRoutes = require('../../user/userRoutes');
 const hojaVidaRoutes = require('../../hojaVida/hojaVidaRoutes');
 const pdf = require('../../pdf/pdf');
 const ipsRoutes = require('../../ipsRoutes/ipsRoutes');
+const notificaciones = require('../../notificaciones/notificaciones');
+const preguntasPsicologia = require('../../psicologia/preguntas');
 
 class WebServer {
     constructor(port) {
@@ -51,12 +53,15 @@ class WebServer {
                 state: states[mongoose.connection.readyState]
             });
         });
-
+        this.app.use(express.json());
         this.app.use('/api/auth', authRoutes);
         this.app.use('/api/users', userRoutes);
-        this.app.use('/api/hojas-vida', hojaVidaRoutes);
+        this.app.use('/api/hojas-vida', hojaVidaRoutes); 
         this.app.use('/api/ips', ipsRoutes);
         this.app.use('/api/pdf', pdf);
+        this.app.use('/api/estado_caso', pdf);
+        this.app.use('/api/notificaciones', notificaciones);
+        this.app.use('/api/preguntas_psicologia', preguntasPsicologia);
     }
 
     /* _userAuthentication() {
