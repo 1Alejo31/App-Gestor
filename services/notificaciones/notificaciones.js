@@ -38,7 +38,8 @@ const upload = multer({
 router.post('/crear', (req, res, next) => {
     upload.fields([
         { name: 'pdf', maxCount: 1 },
-        { name: 'documento_adjunto', maxCount: 1 }
+        { name: 'documento_adjunto', maxCount: 1 },
+        { name: 'archivo', maxCount: 1 }
     ])(req, res, (err) => {
         if (err) {
             if (err.code === 'LIMIT_FILE_SIZE') {
@@ -50,7 +51,7 @@ router.post('/crear', (req, res, next) => {
             if (err.code === 'LIMIT_UNEXPECTED_FILE') {
                 return res.status(400).json({
                     error: 1,
-                    response: { mensaje: "Campo de archivo inválido. Use 'pdf' o 'documento_adjunto'" }
+                    response: { mensaje: "Campo de archivo inválido. Use 'pdf', 'documento_adjunto' o 'archivo'" }
                 });
             }
             if (err.message === 'Solo se permiten archivos PDF') {
@@ -108,7 +109,7 @@ router.post('/crear', (req, res, next) => {
         }
 
         let ruta_documento_adjunto = null;
-        const fileEntry = (req.files && (req.files.pdf?.[0] || req.files.documento_adjunto?.[0])) || req.file || null;
+        const fileEntry = (req.files && (req.files.pdf?.[0] || req.files.documento_adjunto?.[0] || req.files.archivo?.[0])) || req.file || null;
         if (fileEntry) {
             ruta_documento_adjunto = `/uploads/notificaciones/${fileEntry.filename}`;
         }
