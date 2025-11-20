@@ -36,12 +36,21 @@ const upload = multer({
 // POST /api/notificaciones/crear
 // ------------------------------------------------------
 router.post('/crear', (req, res, next) => {
-    upload.single('pdf')(req, res, (err) => {
+    upload.fields([
+        { name: 'pdf', maxCount: 1 },
+        { name: 'documento_adjunto', maxCount: 1 }
+    ])(req, res, (err) => {
         if (err) {
             if (err.code === 'LIMIT_FILE_SIZE') {
                 return res.status(400).json({
                     error: 1,
                     response: { mensaje: 'El archivo excede los 100MB permitidos' }
+                });
+            }
+            if (err.code === 'LIMIT_UNEXPECTED_FILE') {
+                return res.status(400).json({
+                    error: 1,
+                    response: { mensaje: "Campo de archivo inválido. Use 'pdf' o 'documento_adjunto'" }
                 });
             }
             if (err.message === 'Solo se permiten archivos PDF') {
@@ -51,6 +60,7 @@ router.post('/crear', (req, res, next) => {
                 });
             }
 
+            console.error('Error multer:', err);
             return res.status(400).json({
                 error: 1,
                 response: { mensaje: 'Error al procesar el archivo' }
@@ -97,10 +107,10 @@ router.post('/crear', (req, res, next) => {
             });
         }
 
-        // Verificar si viene el PDF
         let ruta_documento_adjunto = null;
-        if (req.file) {
-            ruta_documento_adjunto = `/uploads/notificaciones/${req.file.filename}`;
+        const fileEntry = (req.files && (req.files.pdf?.[0] || req.files.documento_adjunto?.[0])) || req.file || null;
+        if (fileEntry) {
+            ruta_documento_adjunto = `/uploads/notificaciones/${fileEntry.filename}`;
         }
 
         // Crear registro en BD
