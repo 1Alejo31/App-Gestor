@@ -24,7 +24,7 @@ const storage = multer.diskStorage({
 // Validación tamaño y tipo
 const upload = multer({
     storage,
-    limits: { fileSize: 40 * 1024 * 1024 }, // 40MB
+    limits: { fileSize: 100 * 1024 * 1024 },
     fileFilter: (req, file, cb) => {
         if (file.mimetype === 'application/pdf') cb(null, true);
         else cb(new Error('Solo se permiten archivos PDF'), false);
@@ -41,7 +41,7 @@ router.post('/crear', (req, res, next) => {
             if (err.code === 'LIMIT_FILE_SIZE') {
                 return res.status(400).json({
                     error: 1,
-                    response: { mensaje: 'El archivo excede los 40MB permitidos' }
+                    response: { mensaje: 'El archivo excede los 100MB permitidos' }
                 });
             }
             if (err.message === 'Solo se permiten archivos PDF') {
