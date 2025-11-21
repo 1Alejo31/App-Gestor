@@ -176,36 +176,8 @@ router.get('/pdf/:filename', async (req, res) => {
 
 router.get('/notificacion/:filename', async (req, res) => {
     try {
-        // Validación de token
-        const authHeader = req.headers['authorization'] || req.headers.authorization;
-        if (!authHeader || !authHeader.startsWith('Bearer ')) {
-            return res.status(401).json({
-                error: 1,
-                response: { mensaje: 'Token requerido' }
-            });
-        }
-
-        const token = authHeader.substring(7);
-        const secret = process.env.JWT_SECRET;
-        if (!secret) {
-            return res.status(500).json({
-                error: 1,
-                response: { mensaje: 'Servidor sin JWT_SECRET configurado' }
-            });
-        }
-
-        try {
-            jwt.verify(token, secret);
-        } catch (e) {
-            return res.status(401).json({
-                error: 1,
-                response: { mensaje: 'Token inválido o expirado' }
-            });
-        }
-
         const { filename } = req.params;
 
-        // ACEPTA FORMATO DE NOTIFICACIONES
         if (!/^notificacion_\d+\.pdf$/.test(filename)) {
             return res.status(400).json({
                 error: 1,
