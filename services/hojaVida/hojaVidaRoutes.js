@@ -1076,29 +1076,9 @@ router.put('/estado_notificacion/gestionar', async (req, res) => {
 
 router.put('/notificacion/gestionar', async (req, res) => {
     try {
-        // 1. Leer el token únicamente del header
-        const authHeader = req.headers.authorization;
-        if (!authHeader || !authHeader.startsWith("Bearer ")) {
-            return res.json({
-                error: 1,
-                response: { mensaje: "Token no proporcionado" }
-            });
-        }
-
-        const token = authHeader.split(" ")[1];
-
-        // 2. Validar el token
-        let decoded;
-        try {
-            decoded = jwt.verify(token, process.env.JWT_SECRET);
-        } catch (err) {
-            return res.json({
-                error: 1,
-                response: { mensaje: "Token inválido o expirado" }
-            });
-        }
-
-        // 3. Leer el ID desde el body
+        
+        
+        // Leer el ID desde el body
         const { id } = req.body;
 
         if (!id) {
@@ -1108,7 +1088,7 @@ router.put('/notificacion/gestionar', async (req, res) => {
             });
         }
 
-        // 4. Actualizar el documento
+        
         const actualizado = await HojaVida.findByIdAndUpdate(
             id,
             {
@@ -1126,7 +1106,7 @@ router.put('/notificacion/gestionar', async (req, res) => {
             });
         }
 
-        // 5. Respuesta exitosa
+        
         return res.json({
             error: 0,
             response: {
