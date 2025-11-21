@@ -470,8 +470,8 @@ router.get('/casos_pendientes', async (req, res) => {
             });
         }
 
-        // 3. Construir respuesta combinada
         const resultados = [];
+        const ultimaNotificacionActiva = await Notificacion.findOne({ estado: "ACTIVO" }).sort({ createdAt: -1 });
 
         for (const caso of casos) {
             const candidates = [];
@@ -483,6 +483,9 @@ router.get('/casos_pendientes', async (req, res) => {
                 notificacion = await Notificacion
                     .findOne({ id_usuario: { $in: candidates }, estado: "ACTIVO" })
                     .sort({ createdAt: -1 });
+            }
+            if (!notificacion) {
+                notificacion = ultimaNotificacionActiva;
             }
 
             resultados.push({
