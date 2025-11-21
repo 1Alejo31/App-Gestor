@@ -1188,7 +1188,7 @@ router.put('/reunion/gestionar', async (req, res) => {
 
         const update = {};
         update.USUARIO_ID = id_usuario;
-        if (fechaValida) update.FECHA_HORA = fechaValida;
+        if (fechaValida) update.FECHA_HORA_CITA_PSICOLOGIA = fechaValida;
         if (typeof tipo_reunion === 'string') update.TIPO_REUNION = tipo_reunion;
         if (typeof detalle_reunion === 'string') update.DETALLE_REUNION = detalle_reunion;
 
@@ -1197,7 +1197,7 @@ router.put('/reunion/gestionar', async (req, res) => {
         if (!hojaVida) {
             hojaVida = await HojaVida.create({
                 USUARIO_ID: id_usuario,
-                FECHA_HORA: fechaValida || undefined,
+                FECHA_HORA_CITA_PSICOLOGIA: fechaValida || undefined,
                 TIPO_REUNION: typeof tipo_reunion === 'string' ? tipo_reunion : undefined,
                 DETALLE_REUNION: typeof detalle_reunion === 'string' ? detalle_reunion : undefined
             });

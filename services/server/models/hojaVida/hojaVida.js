@@ -34,6 +34,7 @@ const hojaVidaSchema = new mongoose.Schema(
         PDF_URL: { type: String },
         // Campos de agendamiento
         FECHA_HORA: { type: Date },
+        FECHA_HORA_CITA_PSICOLOGIA: { type: Date },
         EXAMENES: { type: String },
         RECOMENDACIONES: { type: String },
         USUARIO_ID: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
