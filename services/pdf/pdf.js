@@ -265,5 +265,58 @@ router.get('/recibida/:filename', async (req, res) => {
     }
 });
 
+router.get('/recibida/por-id/:id', async (req, res) => {
+    try {
+        const authHeader = req.headers['authorization'] || req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(401).json({
+                error: 1,
+                response: { mensaje: 'Token requerido' }
+            });
+        }
+
+        const token = authHeader.substring(7);
+        const secret = process.env.JWT_SECRET;
+        if (!secret) {
+            return res.status(500).json({
+                error: 1,
+                response: { mensaje: 'Servidor sin JWT_SECRET configurado' }
+            });
+        }
+
+        try {
+            jwt.verify(token, secret);
+        } catch (e) {
+            return res.status(401).json({
+                error: 1,
+                response: { mensaje: 'Token inválido o expirado' }
+            });
+        }
+
+        const { id } = req.params;
+        if (!/^[a-fA-F0-9]{24}$/.test(id)) {
+            return res.status(400).json({ error: 1, response: { mensaje: 'ID inválido' } });
+        }
+
+        const registro = await HojaVida.findById(id).lean();
+        if (!registro || !registro.RUTA_NOTIFICACION_RECIBIDA) {
+            return res.status(404).json({ error: 1, response: { mensaje: 'Documento no encontrado' } });
+        }
+
+        const absolutePath = path.join(__dirname, '../../storage', registro.RUTA_NOTIFICACION_RECIBIDA);
+        if (!fs.existsSync(absolutePath)) {
+            return res.status(404).json({ error: 1, response: { mensaje: 'Archivo PDF no encontrado' } });
+        }
+
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `inline; filename="${path.basename(absolutePath)}"`);
+        res.sendFile(absolutePath);
+
+    } catch (err) {
+        console.error('Error en /api/pdf/recibida/por-id/:id:', err);
+        return res.status(500).json({ error: 1, response: { mensaje: 'Error inesperado al obtener el PDF' } });
+    }
+});
+
 
 module.exports = router;
