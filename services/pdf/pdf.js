@@ -211,19 +211,20 @@ router.get('/notificacion/:filename', async (req, res) => {
 router.get('/recibida/:filename', async (req, res) => {
     try {
         const { filename } = req.params;
-        if (!/^[a-fA-F0-9]{24}_\d+\.pdf$/.test(filename)) {
-            return res.status(400).json({
-                error: 1,
-                response: { mensaje: 'Nombre de archivo inválido' }
-            });
+        const isIdPattern = /^[a-fA-F0-9]{24}_\d+\.pdf$/.test(filename);
+        const isNotifPattern = /^notificacion_\d+\.pdf$/.test(filename);
+        if (!isIdPattern && !isNotifPattern) {
+            return res.status(400).json({ error: 1, response: { mensaje: 'Nombre de archivo inválido' } });
         }
 
-        const filePath = path.join(STORAGE_NOTIFICACIONES_DIR, filename);
-        if (!fs.existsSync(filePath)) {
-            return res.status(404).json({
-                error: 1,
-                response: { mensaje: 'Archivo PDF no encontrado' }
-            });
+        const storagePath = path.join(STORAGE_NOTIFICACIONES_DIR, filename);
+        const uploadNotifPath = path.join(UPLOAD_DIR_NOTIFICACIONES, filename);
+
+        let filePath = null;
+        if (fs.existsSync(storagePath)) filePath = storagePath;
+        else if (fs.existsSync(uploadNotifPath)) filePath = uploadNotifPath;
+        else {
+            return res.status(404).json({ error: 1, response: { mensaje: 'Archivo PDF no encontrado' } });
         }
 
         res.setHeader('Content-Type', 'application/pdf');
