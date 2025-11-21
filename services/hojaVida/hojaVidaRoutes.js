@@ -1,6 +1,7 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const HojaVida = require('../server/models/hojaVida/hojaVida');
+const User = require('../server/models/user/user');
 const IPS = require('../server/models/ips/ips');
 const Permiso = require('../server/models/permiso/permiso');
 const multer = require('multer');
@@ -1131,6 +1132,89 @@ router.put('/notificacion/gestionar', async (req, res) => {
         return res.json({
             error: 1,
             response: { mensaje: "Error inesperado", detalle: error.message }
+        });
+    }
+});
+
+router.put('/reunion/gestionar', async (req, res) => {
+    try {
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(401).json({
+                error: 1,
+                response: { mensaje: 'Token inválido o no proporcionado' }
+            });
+        }
+
+        const token = authHeader.split(' ')[1];
+        let decoded;
+        try {
+            decoded = jwt.verify(token, process.env.JWT_SECRET);
+        } catch (err) {
+            return res.status(401).json({
+                error: 1,
+                response: { mensaje: 'Token inválido o expirado' }
+            });
+        }
+
+        const { id_caso, id_usuario, fecha_hora, tipo_reunion, detalle_reunion } = req.body;
+
+        if (!id_caso || !id_usuario) {
+            return res.status(400).json({
+                error: 1,
+                response: { mensaje: 'Debe enviar id_caso e id_usuario' }
+            });
+        }
+
+        const usuario = await User.findById(id_usuario).lean();
+        if (!usuario) {
+            return res.status(404).json({
+                error: 1,
+                response: { mensaje: 'Usuario no encontrado' }
+            });
+        }
+
+        let fechaValida = null;
+        if (fecha_hora) {
+            const f = new Date(fecha_hora);
+            if (isNaN(f.getTime())) {
+                return res.status(400).json({
+                    error: 1,
+                    response: { mensaje: 'fecha_hora inválida' }
+                });
+            }
+            fechaValida = f;
+        }
+
+        const update = {};
+        update.USUARIO_ID = id_usuario;
+        if (fechaValida) update.FECHA_HORA = fechaValida;
+        if (typeof tipo_reunion === 'string') update.TIPO_REUNION = tipo_reunion;
+        if (typeof detalle_reunion === 'string') update.DETALLE_REUNION = detalle_reunion;
+
+        let hojaVida = await HojaVida.findByIdAndUpdate(id_caso, update, { new: true });
+
+        if (!hojaVida) {
+            hojaVida = await HojaVida.create({
+                USUARIO_ID: id_usuario,
+                FECHA_HORA: fechaValida || undefined,
+                TIPO_REUNION: typeof tipo_reunion === 'string' ? tipo_reunion : undefined,
+                DETALLE_REUNION: typeof detalle_reunion === 'string' ? detalle_reunion : undefined
+            });
+        }
+
+        return res.status(200).json({
+            error: 0,
+            response: {
+                mensaje: 'Registro actualizado correctamente',
+                id: hojaVida._id
+            }
+        });
+
+    } catch (err) {
+        return res.status(500).json({
+            error: 1,
+            response: { mensaje: 'Error inesperado' }
         });
     }
 });

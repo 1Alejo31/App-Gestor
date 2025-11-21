@@ -38,6 +38,8 @@ const hojaVidaSchema = new mongoose.Schema(
         RECOMENDACIONES: { type: String },
         USUARIO_ID: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
         DETALLE: { type: String },
+        TIPO_REUNION: { type: String },
+        DETALLE_REUNION: { type: String },
         TEXT_NOTIFICACION: { type: String },
         ESTADO_NOTIFICACION: { type: String, default: "TOMADO POR PSICOLOGIA" },
         H_ESTADO_NOTIFICACION_CONSENTIMIENTO: {type: String, default: "SIN GESTION"},
