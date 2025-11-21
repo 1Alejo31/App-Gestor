@@ -401,21 +401,7 @@ router.post('/por_ips', async (req, res) => {
 });
 router.post('/por_documento', async (req, res) => {
     try {
-
-        const authHeader = req.headers['authorization'] || req.headers.authorization;
-        if (!authHeader || !authHeader.startsWith('Bearer ')) {
-            return res.status(401).json({ error: 1, response: { mensaje: 'Token requerido' } });
-        }
-        const token = authHeader.substring(7);
-        const secret = process.env.JWT_SECRET;
-        if (!secret) {
-            return res.status(500).json({ error: 1, response: { mensaje: 'Servidor sin JWT_SECRET configurado' } });
-        }
-        try {
-            jwt.verify(token, secret);
-        } catch (e) {
-            return res.status(401).json({ error: 1, response: { mensaje: 'Token inválido o expirado' } });
-        }
+        
 
         const { documento } = req.body;
 
@@ -451,7 +437,7 @@ router.post('/por_documento', async (req, res) => {
         });
 
     } catch (err) {
-        console.error('Error en /api/hoja_vida/por_documento:', err);
+        console.error('Error en /api/hojas-vida/por_documento:', err);
         return res.status(500).json({ error: 1, response: { mensaje: 'Error interno del servidor' } });
     }
 });
