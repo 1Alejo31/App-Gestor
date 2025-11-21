@@ -514,4 +514,52 @@ router.get('/casos_pendientes', async (req, res) => {
 });
 
 
+router.get('/consultar', async (req, res) => {
+    try {
+        const authHeader = req.headers['authorization'] || req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(401).json({
+                error: 1,
+                response: { mensaje: 'Token requerido' }
+            });
+        }
+
+        const token = authHeader.substring(7);
+        const secret = process.env.JWT_SECRET;
+        if (!secret) {
+            return res.status(500).json({
+                error: 1,
+                response: { mensaje: 'Servidor sin JWT_SECRET configurado' }
+            });
+        }
+
+        try {
+            jwt.verify(token, secret);
+        } catch (e) {
+            return res.status(401).json({
+                error: 1,
+                response: { mensaje: 'Token inválido o expirado' }
+            });
+        }
+
+        const notificaciones = await Notificacion.find({}).sort({ createdAt: -1 });
+
+        return res.status(200).json({
+            error: 0,
+            response: {
+                mensaje: `Se encontraron ${notificaciones.length} notificaciones`,
+                total: notificaciones.length,
+                notificaciones
+            }
+        });
+
+    } catch (err) {
+        console.error('Error en /api/notificaciones/consultar:', err);
+        return res.status(500).json({
+            error: 1,
+            response: { mensaje: 'Error inesperado' }
+        });
+    }
+});
+
 module.exports = router;
