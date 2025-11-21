@@ -464,6 +464,8 @@ router.get('/casos_pendientes', async (req, res) => {
                 NOMBRE: caso.NOMBRE,
                 PRIMER_APELLIDO: caso.PRIMER_APELLIDO,
                 SEGUNDO_APELLIDO: caso.SEGUNDO_APELLIDO,
+                CELULAR: caso.CELULAR,
+                CORREO: caso.CORREO,
                 notificacion: notificacion
                     ? {
                         _id: notificacion._id,
