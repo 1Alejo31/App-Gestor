@@ -680,7 +680,11 @@ router.post('/por_usuario_sic', async (req, res) => {
             });
         }
 
-        const hojasVida = await HojaVida.find({ USUARIO_SIC }).lean();
+        const hojasVida = await HojaVida
+            .find({ USUARIO_SIC })
+            .populate('IPS_ID')
+            .populate('USUARIO_ID')
+            .lean();
 
         return res.status(200).json({
             error: 0,
