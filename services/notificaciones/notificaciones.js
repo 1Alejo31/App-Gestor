@@ -431,7 +431,7 @@ router.get('/casos_pendientes', async (req, res) => {
 
         
         const casos = await HojaVida.find({
-            H_ESTADO_NOTIFICACION_CONSENTIMIENTO: "SIN GESTION"
+            H_ESTADO_NOTIFICACION_CONSENTIMIENTO: { $exists: true, $eq: "SIN GESTION" }
         });
 
         if (!casos.length) {
