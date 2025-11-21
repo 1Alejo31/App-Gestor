@@ -417,22 +417,11 @@ router.post('/por_documento', async (req, res) => {
         }
 
 
-        const respuesta = {
-            _id: hojaVida._id,
-            DOCUMENTO: hojaVida.DOCUMENTO,
-            NOMBRE: hojaVida.NOMBRE,
-            PRIMER_APELLIDO: hojaVida.PRIMER_APELLIDO,
-            NOMBREIPS: hojaVida.IPS_ID ? hojaVida.IPS_ID.NOMBRE_IPS : null,
-            EXAMENES: hojaVida.EXAMENES || [],
-            FECHA_EXAMEN: hojaVida.FECHA_EXAMEN || null,
-            HORA_EXAMEN: hojaVida.HORA_EXAMEN || null
-        };
-
         return res.status(200).json({
             error: 0,
             response: {
-                mensaje: 'Consulta exitosa',
-                data: respuesta
+                mensaje: 'Consulta exitosa - Hoja de vida completa',
+                data: hojaVida
             }
         });
 
