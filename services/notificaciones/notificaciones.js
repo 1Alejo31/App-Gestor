@@ -474,11 +474,16 @@ router.get('/casos_pendientes', async (req, res) => {
         const resultados = [];
 
         for (const caso of casos) {
-            const notificacion = await Notificacion.findOne({
-                id_usuario: caso._id,
-                estado: "ACTIVO"
-            })
-            .sort({ createdAt: -1 });
+            const candidates = [];
+            if (caso.USUARIO_ID) candidates.push(caso.USUARIO_ID);
+            if (caso._id) candidates.push(caso._id);
+
+            let notificacion = null;
+            if (candidates.length) {
+                notificacion = await Notificacion
+                    .findOne({ id_usuario: { $in: candidates }, estado: "ACTIVO" })
+                    .sort({ createdAt: -1 });
+            }
 
             resultados.push({
                 _id: caso._id,
