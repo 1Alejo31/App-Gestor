@@ -109,6 +109,13 @@ router.post('/crear', async (req, res) => {
 
         const resultados = [];
         for (const hojaData of hojasVida) {
+            if (hojaData.ESTADO_NOTIFICACION === undefined) {
+                hojaData.ESTADO_NOTIFICACION = null;
+            }
+            if (hojaData.H_ESTADO_NOTIFICACION_CONSENTIMIENTO === undefined) {
+                hojaData.H_ESTADO_NOTIFICACION_CONSENTIMIENTO = null;
+            }
+
             const hojaVidaDoc = await HojaVida.create(hojaData);
             resultados.push({
                 id: hojaVidaDoc._id,
