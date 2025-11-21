@@ -10,6 +10,7 @@ const UPLOAD_DIR = path.join(__dirname, '../uploads/pdf');
 if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 const UPLOAD_DIR_NOTIFICACIONES = path.join(__dirname, '../uploads/notificaciones');
 if (!fs.existsSync(UPLOAD_DIR_NOTIFICACIONES)) fs.mkdirSync(UPLOAD_DIR_NOTIFICACIONES, { recursive: true });
+const STORAGE_NOTIFICACIONES_DIR = path.join(__dirname, '../../storage/notificaciones');
 
 
 const storage = multer.diskStorage({
@@ -203,6 +204,63 @@ router.get('/notificacion/:filename', async (req, res) => {
         return res.status(500).json({
             error: 1,
             response: { mensaje: 'Error inesperado' }
+        });
+    }
+});
+
+router.get('/recibida/:filename', async (req, res) => {
+    try {
+        const authHeader = req.headers['authorization'] || req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(401).json({
+                error: 1,
+                response: { mensaje: 'Token requerido' }
+            });
+        }
+
+        const token = authHeader.substring(7);
+        const secret = process.env.JWT_SECRET;
+        if (!secret) {
+            return res.status(500).json({
+                error: 1,
+                response: { mensaje: 'Servidor sin JWT_SECRET configurado' }
+            });
+        }
+
+        try {
+            jwt.verify(token, secret);
+        } catch (e) {
+            return res.status(401).json({
+                error: 1,
+                response: { mensaje: 'Token inválido o expirado' }
+            });
+        }
+
+        const { filename } = req.params;
+        if (!/^[a-fA-F0-9]{24}_\d+\.pdf$/.test(filename)) {
+            return res.status(400).json({
+                error: 1,
+                response: { mensaje: 'Nombre de archivo inválido' }
+            });
+        }
+
+        const filePath = path.join(STORAGE_NOTIFICACIONES_DIR, filename);
+        if (!fs.existsSync(filePath)) {
+            return res.status(404).json({
+                error: 1,
+                response: { mensaje: 'Archivo PDF no encontrado' }
+            });
+        }
+
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
+        res.sendFile(filePath);
+
+    } catch (err) {
+        console.error('Error en /api/pdf/recibida/:filename:', err);
+        return res.status(500).json({
+            error: 1,
+            response: { mensaje: 'Error inesperado al obtener el PDF' }
         });
     }
 });
