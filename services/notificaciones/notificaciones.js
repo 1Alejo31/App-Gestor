@@ -429,36 +429,7 @@ router.get('/casos_pendientes', async (req, res) => {
     try {
         console.log("URL solicitada: /api/notificaciones/casos_pendientes");
 
-        // 1. Validación del token
-        const authHeader = req.headers['authorization'] || req.headers.authorization;
-
-        if (!authHeader || !authHeader.startsWith('Bearer ')) {
-            return res.status(401).json({
-                error: 1,
-                response: { mensaje: 'Token requerido' }
-            });
-        }
-
-        const token = authHeader.substring(7);
-        const secret = process.env.JWT_SECRET;
-
-        if (!secret) {
-            return res.status(500).json({
-                error: 1,
-                response: { mensaje: 'Servidor sin JWT_SECRET configurado' }
-            });
-        }
-
-        try {
-            jwt.verify(token, secret);
-        } catch (e) {
-            return res.status(401).json({
-                error: 1,
-                response: { mensaje: 'Token inválido o expirado' }
-            });
-        }
-
-        // 2. Buscar casos con consentimiento pendiente
+        
         const casos = await HojaVida.find({
             H_ESTADO_NOTIFICACION_CONSENTIMIENTO: "SIN GESTION"
         });
