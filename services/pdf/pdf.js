@@ -8,6 +8,8 @@ const HojaVida = require('../server/models/hojaVida/hojaVida');
 const router = express.Router();
 const UPLOAD_DIR = path.join(__dirname, '../uploads/pdf');
 if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+const UPLOAD_DIR_NOTIFICACIONES = path.join(__dirname, '../uploads/notificaciones');
+if (!fs.existsSync(UPLOAD_DIR_NOTIFICACIONES)) fs.mkdirSync(UPLOAD_DIR_NOTIFICACIONES, { recursive: true });
 
 
 const storage = multer.diskStorage({
@@ -172,7 +174,7 @@ router.get('/pdf/:filename', async (req, res) => {
     }
 });
 
-router.get('/pdf/notificacion/:filename', async (req, res) => {
+router.get('/notificacion/:filename', async (req, res) => {
     try {
         // Validación de token
         const authHeader = req.headers['authorization'] || req.headers.authorization;
@@ -185,6 +187,12 @@ router.get('/pdf/notificacion/:filename', async (req, res) => {
 
         const token = authHeader.substring(7);
         const secret = process.env.JWT_SECRET;
+        if (!secret) {
+            return res.status(500).json({
+                error: 1,
+                response: { mensaje: 'Servidor sin JWT_SECRET configurado' }
+            });
+        }
 
         try {
             jwt.verify(token, secret);
