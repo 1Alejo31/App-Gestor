@@ -45,7 +45,13 @@ const hojaVidaSchema = new mongoose.Schema(
         ESTADO_NOTIFICACION: { type: String, default: "TOMADO POR PSICOLOGIA" },
         H_ESTADO_NOTIFICACION_CONSENTIMIENTO: {type: String, default: "SIN GESTION"},
         USUARIO_SIC: { type: String },
-        RUTA_NOTIFICACION_RECIBIDA: {type:String}
+        RUTA_NOTIFICACION_RECIBIDA: {type:String},
+        RUTA_BIOMETRIA: {
+            ruta: { type: String, default: null },
+            id_usuario: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+            fecha: { type: Date, default: null }
+        }
+
     },
     { timestamps: true, collection: 'cl_hoja_vida' }
 );

@@ -1358,5 +1358,240 @@ router.get('/notificacion/descargar', async (req, res) => {
 });
 
 
+router.put('/biometria/subir', upload.single('pdf'), async (req, res) => {
+    try {
+        
+        const authHeader = req.headers['authorization'];
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(401).json({
+                error: 1,
+                response: { mensaje: 'Token requerido' }
+            });
+        }
+
+        const token = authHeader.substring(7);
+        let payload;
+
+        try {
+            payload = jwt.verify(token, process.env.JWT_SECRET);
+        } catch (e) {
+            return res.status(401).json({
+                error: 1,
+                response: { mensaje: 'Token inválido o expirado' }
+            });
+        }
+
+        
+        const { id_aspirante, id_usuario } = req.body;
+
+        if (!id_aspirante || !id_usuario || !req.file) {
+            return res.status(400).json({
+                error: 1,
+                response: { mensaje: "Faltan parámetros (id_aspirante, id_usuario, pdf)" }
+            });
+        }
+
+        
+        const registro = await HojaVida.findById(id_aspirante);
+        if (!registro) {
+            return res.status(404).json({
+                error: 1,
+                response: { mensaje: "Aspirante no encontrado" }
+            });
+        }
+
+        
+        const nombreArchivo = `${id_aspirante}_${Date.now()}.pdf`;
+        const rutaRelativa = `biometria/${nombreArchivo}`;
+        const rutaAbsoluta = path.join(__dirname, '../../storage', rutaRelativa);
+
+        const dir = path.dirname(rutaAbsoluta);
+        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+
+        
+        if (registro.RUTA_BIOMETRIA && registro.RUTA_BIOMETRIA.ruta) {
+            const oldPath = path.join(__dirname, '../../storage', registro.RUTA_BIOMETRIA.ruta);
+            if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+        }
+
+        
+        fs.writeFileSync(rutaAbsoluta, req.file.buffer);
+
+        
+        registro.RUTA_BIOMETRIA = {
+            ruta: rutaRelativa,
+            id_usuario,
+            fecha: new Date()
+        };
+
+        await registro.save();
+
+        return res.json({
+            error: 0,
+            response: {
+                mensaje: "Biometría cargada exitosamente",
+                id_aspirante: id_aspirante,
+                biometria: registro.RUTA_BIOMETRIA
+            }
+        });
+
+    } catch (error) {
+        console.error("Error inesperado:", error);
+        return res.status(500).json({
+            error: 1,
+            response: {
+                mensaje: "Error inesperado",
+                detalle: error.message
+            }
+        });
+    }
+});
+
+router.get('/biometria/descargar/:aspiranteId', async (req, res) => {
+    try {
+        
+        const authHeader = req.headers['authorization'];
+
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(401).json({
+                error: 1,
+                response: { mensaje: 'Token requerido' }
+            }); 
+        }
+
+        const token = authHeader.substring(7);
+        const secret = process.env.JWT_SECRET;
+
+        let payload;
+        try {
+            payload = jwt.verify(token, secret);
+        } catch (err) {
+            return res.status(401).json({
+                error: 1,
+                response: { mensaje: 'Token inválido o expirado' }
+            });
+        }
+
+        
+        const { aspiranteId } = req.params;
+
+        
+        const registro = await HojaVida.findById(aspiranteId);
+
+        if (!registro) {
+            return res.status(404).json({
+                error: 1,
+                response: { mensaje: 'Aspirante no encontrado' }
+            });
+        }
+
+        
+        if (
+            !registro.RUTA_BIOMETRIA ||
+            !registro.RUTA_BIOMETRIA.ruta ||
+            registro.RUTA_BIOMETRIA.ruta.trim() === ''
+        ) {
+            return res.status(404).json({
+                error: 1,
+                response: { mensaje: 'El aspirante no tiene PDF biométrico cargado' }
+            });
+        }
+
+        
+        const rutaRelativa = registro.RUTA_BIOMETRIA.ruta;
+        const rutaAbsoluta = path.join(__dirname, '../../storage', rutaRelativa);
+
+        
+        if (!fs.existsSync(rutaAbsoluta)) {
+            return res.status(404).json({
+                error: 1,
+                response: { mensaje: 'El archivo biométrico no existe en el servidor' }
+            });
+        }
+
+        
+        return res.download(rutaAbsoluta, `biometria_${aspiranteId}.pdf`);
+
+    } catch (error) {
+        console.error('Error inesperado:', error);
+        return res.status(500).json({
+            error: 1,
+            response: {
+                mensaje: 'Error inesperado',
+                detalle: error.message
+            }
+        });
+    }
+});
+
+router.get('/biometria/info/:aspiranteId', async (req, res) => {
+    try {
+        
+        const authHeader = req.headers['authorization'];
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(401).json({
+                error: 1,
+                response: { mensaje: 'Token requerido' }
+            });
+        }
+
+        const token = authHeader.substring(7);
+        const secret = process.env.JWT_SECRET;
+
+        let payload;
+        try {
+            payload = jwt.verify(token, secret);
+        } catch (e) {
+            return res.status(401).json({
+                error: 1,
+                response: { mensaje: 'Token inválido o expirado' }
+            });
+        }
+
+        const { aspiranteId } = req.params;
+
+        
+        const registro = await HojaVida.findById(aspiranteId)
+            .populate('RUTA_BIOMETRIA.id_usuario', 'Cr_Nombre_Usuario');
+
+        if (!registro) {
+            return res.status(404).json({
+                error: 1,
+                response: { mensaje: 'Aspirante no encontrado' }
+            });
+        }
+
+        if (!registro.RUTA_BIOMETRIA || !registro.RUTA_BIOMETRIA.ruta) {
+            return res.status(404).json({
+                error: 1,
+                response: { mensaje: 'Este aspirante no tiene PDF cargado' }
+            });
+        }
+
+        return res.json({
+            error: 0,
+            response: {
+                mensaje: 'Información del archivo de biometría',
+                data: {
+                    ruta: registro.RUTA_BIOMETRIA.ruta,
+                    fecha: registro.RUTA_BIOMETRIA.fecha,
+                    usuario: registro.RUTA_BIOMETRIA.id_usuario
+                        ? registro.RUTA_BIOMETRIA.id_usuario.Cr_Nombre_Usuario
+                        : null,
+                    id_usuario: registro.RUTA_BIOMETRIA.id_usuario?._id || null
+                }
+            }
+        });
+
+    } catch (error) {
+        console.error("Error inesperado:", error);
+        return res.status(500).json({
+            error: 1,
+            response: { mensaje: 'Error inesperado', detalle: error.message }
+        });
+    }
+});
+
+
 
 module.exports = router;
