@@ -401,21 +401,38 @@ router.post('/por_ips', async (req, res) => {
 });
 router.post('/por_documento', async (req, res) => {
     try {
-        
+        const { documento, codigo_inscripcion } = req.body;
 
-        const { documento } = req.body;
+        const documentoTrim = typeof documento === 'string' ? documento.trim() : '';
+        const codigoTrim = typeof codigo_inscripcion === 'string' ? codigo_inscripcion.trim() : '';
 
-        if (!documento || String(documento).trim() === '') {
-            return res.status(400).json({ error: 1, response: { mensaje: 'Se requiere el número de documento' } });
+        if (!documentoTrim && !codigoTrim) {
+            return res.status(400).json({
+                error: 1,
+                response: { mensaje: 'Debe enviar "documento" o "codigo_inscripcion"' }
+            });
         }
 
+        const query = {};
+        if (documentoTrim) query.DOCUMENTO = documentoTrim;
+        if (codigoTrim) query.CODIGO_INSCRIPCION = codigoTrim;
 
-        const hojaVida = await HojaVida.findOne({ DOCUMENTO: documento.trim() }).populate('IPS_ID').lean();
+        const hojaVida = await HojaVida
+            .findOne(query)
+            .populate('IPS_ID')
+            .lean();
 
         if (!hojaVida) {
-            return res.status(404).json({ error: 1, response: { mensaje: `Documento '${documento}' no encontrado` } });
-        }
+            const criterios = [
+                documentoTrim ? `DOCUMENTO='${documentoTrim}'` : null,
+                codigoTrim ? `CODIGO_INSCRIPCION='${codigoTrim}'` : null
+            ].filter(Boolean).join(' y ');
 
+            return res.status(404).json({
+                error: 1,
+                response: { mensaje: `No se encontró hoja de vida por ${criterios}` }
+            });
+        }
 
         return res.status(200).json({
             error: 0,
