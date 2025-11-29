@@ -265,15 +265,42 @@ router.get('/hojas-vida-full', async (req, res) => {
             .populate('IPS_ID')
             .lean();
 
-        const data = hojasVida.map(hv => {
-            if (hv && hv.IPS_ID && typeof hv.IPS_ID === 'object') {
-                return {
-                    ...hv,
-                    IPS: hv.IPS_ID
-                };
-            }
-            return hv;
-        });
+        const data = await Promise.all(
+            hojasVida.map(async (hv) => {
+                let result = hv;
+
+                // Adjuntar datos completos de IPS bajo clave 'IPS'
+                if (hv && hv.IPS_ID && typeof hv.IPS_ID === 'object') {
+                    result = { ...result, IPS: hv.IPS_ID };
+                }
+
+                // Cruce USUARIO_SIC -> cl_credencial (User) para obtener Cr_Pe_Codigo
+                // Luego usar Cr_Pe_Codigo -> cl_permisos para traer solo nombre/apellidos
+                const usuarioSic = hv?.USUARIO_SIC ? String(hv.USUARIO_SIC).trim() : '';
+                if (usuarioSic && usuarioSic.length === 24) {
+                    try {
+                        const cred = await User.findById(usuarioSic).select('Cr_Pe_Codigo').lean();
+                        const permisoId = cred?.Cr_Pe_Codigo || null;
+                        if (permisoId) {
+                            const permiso = await Permiso
+                                .findById(permisoId)
+                                .select('Pe_Nombre Pe_Apellido Pe_Seg_Apellido')
+                                .lean();
+
+                            result = {
+                                ...result,
+                                Cr_Pe_Codigo: permisoId,
+                                PERMISO_USUARIO_SIC: permiso || null
+                            };
+                        }
+                    } catch (e) {
+                        // Silenciar errores por registro individual para no romper la respuesta completa
+                    }
+                }
+
+                return result;
+            })
+        );
 
         return res.status(200).json({
             error: 0,
@@ -329,15 +356,42 @@ router.get('/hojas-vida-full', async (req, res) => {
             .populate('IPS_ID')
             .lean();
 
-        const data = hojasVida.map(hv => {
-            if (hv && hv.IPS_ID && typeof hv.IPS_ID === 'object') {
-                return {
-                    ...hv,
-                    IPS: hv.IPS_ID
-                };
-            }
-            return hv;
-        });
+        const data = await Promise.all(
+            hojasVida.map(async (hv) => {
+                let result = hv;
+
+                // Adjuntar datos completos de IPS bajo clave 'IPS'
+                if (hv && hv.IPS_ID && typeof hv.IPS_ID === 'object') {
+                    result = { ...result, IPS: hv.IPS_ID };
+                }
+
+                // Cruce USUARIO_SIC -> cl_credencial (User) para obtener Cr_Pe_Codigo
+                // Luego usar Cr_Pe_Codigo -> cl_permisos para traer solo nombre/apellidos
+                const usuarioSic = hv?.USUARIO_SIC ? String(hv.USUARIO_SIC).trim() : '';
+                if (usuarioSic && usuarioSic.length === 24) {
+                    try {
+                        const cred = await User.findById(usuarioSic).select('Cr_Pe_Codigo').lean();
+                        const permisoId = cred?.Cr_Pe_Codigo || null;
+                        if (permisoId) {
+                            const permiso = await Permiso
+                                .findById(permisoId)
+                                .select('Pe_Nombre Pe_Apellido Pe_Seg_Apellido')
+                                .lean();
+
+                            result = {
+                                ...result,
+                                Cr_Pe_Codigo: permisoId,
+                                PERMISO_USUARIO_SIC: permiso || null
+                            };
+                        }
+                    } catch (e) {
+                        // Silenciar errores por registro individual para no romper la respuesta completa
+                    }
+                }
+
+                return result;
+            })
+        );
 
         return res.status(200).json({
             error: 0,
