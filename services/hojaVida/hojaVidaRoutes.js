@@ -260,15 +260,27 @@ router.get('/hojas-vida-full', async (req, res) => {
             });
         }
 
-        
-        const hojasVida = await HojaVida.find({}).lean();
+        const hojasVida = await HojaVida
+            .find({})
+            .populate('IPS_ID')
+            .lean();
+
+        const data = hojasVida.map(hv => {
+            if (hv && hv.IPS_ID && typeof hv.IPS_ID === 'object') {
+                return {
+                    ...hv,
+                    IPS: hv.IPS_ID
+                };
+            }
+            return hv;
+        });
 
         return res.status(200).json({
             error: 0,
             response: {
                 mensaje: 'Consulta exitosa - Todas las hojas de vida',
-                data: hojasVida,
-                total: hojasVida.length
+                data,
+                total: data.length
             }
         });
 
@@ -312,15 +324,27 @@ router.get('/hojas-vida-full', async (req, res) => {
             });
         }
 
-        
-        const hojasVida = await HojaVida.find({}).lean();
+        const hojasVida = await HojaVida
+            .find({})
+            .populate('IPS_ID')
+            .lean();
+
+        const data = hojasVida.map(hv => {
+            if (hv && hv.IPS_ID && typeof hv.IPS_ID === 'object') {
+                return {
+                    ...hv,
+                    IPS: hv.IPS_ID
+                };
+            }
+            return hv;
+        });
 
         return res.status(200).json({
             error: 0,
             response: {
                 mensaje: 'Consulta exitosa - Todas las hojas de vida',
-                data: hojasVida,
-                total: hojasVida.length
+                data,
+                total: data.length
             }
         });
 
